@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { Component } from 'react';
 import { StyleSheet, TextInput, Text, View, TouchableOpacity, ImageBackground, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -17,31 +16,27 @@ export default class Login extends Component {
       }
   }
 
-  // realizarLogin = async () => {
-  //   try {
-  //     this.setState({ isLoading : true })
-
-  //     const resposta = await api.post('/login',{
-  //       email: this.state.email,
-  //       senha: this.state.senha
-  //     })
-
-  //     if(resposta.status === 200){
-  //       await AsyncStorage.setItem('userToken-acess_spmg_', resposta.data.token)
-
-  //       this.setState({ isLoading : false })
-
-  //       this.props.navigation.navigate('Main')
-  //       this.limparCampos()
-  //     }
-
-  //   } catch (error) {
-  //     this.setState({ mensagemErro : 'E-mail ou senha inválidos! Tente novamente!', isLoading : false })
-  //   }
-  // }
-
   realizarLogin = async () => {
-    this.props.navigation.navigate('Main')
+    try {
+      this.setState({ isLoading : true })
+
+      const resposta = await api.post('/login',{
+        email: this.state.email,
+        senha: this.state.senha
+      })
+
+      if(resposta.status === 200){
+        await AsyncStorage.setItem('userToken-acess_spmg_', resposta.data.token)
+
+        this.setState({ isLoading : false })
+
+        this.props.navigation.navigate('Main')
+        this.limparCampos()
+      }
+
+    } catch (error) {
+      this.setState({ mensagemErro : 'E-mail ou senha inválidos! Tente novamente!', isLoading : false })
+    }
   }
 
   limparCampos = () => {
@@ -85,9 +80,17 @@ export default class Login extends Component {
               <Text style={styles.mensagemDeErro}>{this.state.mensagemErro}</Text>
             </View>
 
-            <TouchableOpacity /*disabled={this.state.isLoading === true && this.state.email === '' || this.state.senha === '' ? 'none' : ''}*/ style={styles.btnLogin} onPress={this.realizarLogin}>
+            {
+              this.state.isLoading === true ?
+              <TouchableOpacity disabled={true} style={styles.btnLogin} onPress={this.realizarLogin}>
+                <Text style={styles.btnLoginText}>Loading...</Text>
+              </TouchableOpacity> : 
+
+              <TouchableOpacity disabled={this.state.email === '' || this.state.senha === '' ? 'none' : '' } style={styles.btnLogin} onPress={this.realizarLogin}>
               <Text style={styles.btnLoginText}>Login</Text>
             </TouchableOpacity>
+            }
+           
         </View>
       );
   }

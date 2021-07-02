@@ -1,6 +1,5 @@
-import { StatusBar } from 'expo-status-bar';
 import React, { Component } from 'react';
-import { FlatList, StyleSheet, Text, View, Image } from 'react-native';
+import { TouchableOpacity, FlatList, StyleSheet, Text, View, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import jwtDecode from 'jwt-decode';
 
@@ -12,32 +11,56 @@ export default class Consultas extends Component {
 
     this.state = {
       listaConsultas : [],
-      permissao : ''
+      permissao : '',
+      idConsulta : 0
     }
   }
 
   buscarDadosStorage = async () => {
-    const token = await AsyncStorage.getItem('userToken-acess_spmg_')
+    try {
+      const token = await AsyncStorage.getItem('userToken-acess_spmg_')
 
-    await this.setState({ permissao: jwtDecode(token).role })
+      await this.setState({ permissao: jwtDecode(token).role })
+    } catch (error) {
+      
+    }
   }
 
 
   buscarConsultas = async () => {
-    const token = await AsyncStorage.getItem('userToken-acess_spmg_')
+    try {
+      const token = await AsyncStorage.getItem('userToken-acess_spmg_')
 
-    const resposta = await api.get('/consultas/minhas', {
-      headers: {
-        'Authorization' : 'Bearer ' + token
+      this.buscarDadosStorage();
+
+      if(this.state.permissao === '1'){
+
+        const resposta = await api.get('/consultas', {
+          headers: {
+            'Authorization' : 'Bearer ' + token
+          }
+        })
+    
+        this.setState({listaConsultas : resposta.data})
+
+      }else{
+        const resposta = await api.get('/consultas/minhas', {
+          headers: {
+            'Authorization' : 'Bearer ' + token
+          }
+        })
+    
+        this.setState({listaConsultas : resposta.data})
       }
-    })
+    } catch (error) {
+      
+    }
 
-    this.setState({listaConsultas : resposta.data})
   }
 
   componentDidMount(){
-    this.buscarConsultas();
     this.buscarDadosStorage();
+    this.buscarConsultas();
   }
 
   render(){
@@ -64,6 +87,7 @@ export default class Consultas extends Component {
   }
 
   renderItem = ({item}) => (
+    this.state.permissao === '1' ?
     <View style={styles.consulta}>
 
       <View style={styles.infoConsulta}>
@@ -78,47 +102,118 @@ export default class Consultas extends Component {
             <Text>Hora: {item.horaConsulta}</Text>
           </View>
           <View 
-            style={item.situacao === 'Realizada' ? styles.situacaoRealizada : 
-            item.situacao === 'Agendada' ? styles.situacaoAgendada : styles.situacaoCancelada
+            style={item.idSituacaoNavigation.descricao === 'Realizada' ? styles.situacaoRealizada : 
+            item.idSituacaoNavigation.descricao === 'Agendada' ? styles.situacaoAgendada : styles.situacaoCancelada
             }
           >
-            <Text style={{textTransform: 'capitalize'}}>Situação: {item.situacao}</Text>
+            <Text style={{textTransform: 'capitalize'}}>Situação: {item.idSituacaoNavigation.descricao}</Text>
           </View>
         </View>
       </View>
-  
-      {
-        this.state.permissao === '3' ?
+
         <View style={styles.medico}>
           <View style={styles.flatInfoText}>
             <Text style={styles.infoText}>Médico</Text>
           </View>
           <View style={styles.dadosMedico}>
             <View style={styles.dadoInfo}>
-              <Text style={styles.nomeMedico}>{item.nomeMedico}</Text>
+              <Text style={styles.nomeMedico}>{item.idMedicoNavigation.nome}</Text>
             </View>
             <View style={styles.dadoInfo}>
-              <Text>Especialidade: {item.especialidade}</Text>
+              <Text>Especialidade: {item.idMedicoNavigation.idEspecialidadeNavigation.descricao}</Text>
             </View>
           </View>
-        </View> :
+        </View>
 
-        this.state.permissao === '2' &&
         <View style={styles.medico}>
           <View style={styles.flatInfoText}>
             <Text style={styles.infoText}>Paciente</Text>
           </View>
           <View style={styles.dadosMedico}>
             <View style={styles.dadoInfo}>
-              <Text style={styles.nomeMedico}>{item.nomePaciente}</Text>
+              <Text style={styles.nomeMedico}>{item.idPacienteNavigation.nome}</Text>
             </View>
             <View style={styles.dadoInfo}>
-              <Text>Data de Nascimento: {Intl.DateTimeFormat('pt-BR').format(new Date(item.dataNascimento))}</Text>
+              <Text>Data de Nascimento: {Intl.DateTimeFormat('pt-BR').format(new Date(item.idPacienteNavigation.dataNascimento))}</Text>
             </View>
           </View>
         </View>
-      }
 
+        <View style={styles.descricao}>
+          <View style={styles.flatInfoText}>
+            <Text style={styles.infoText}>Descrição</Text>
+          </View>
+          <View style={styles.dadosDescricao}>
+            <View style={styles.textoDescricao}>
+              <Text>{item.descricao}</Text>
+            </View>
+          </View>
+        </View>
+
+      {/* <View style={styles.mostrarConsulta}>
+        <TouchableOpacity style={styles.btnMostrarConsulta} onPress={ () => this.mostrarConsulta(item)}>
+
+        </TouchableOpacity>
+      </View> */}
+
+    </View> :
+
+
+    // Médicos / Pacientes
+    <View style={styles.consulta}>
+
+    <View style={styles.infoConsulta}>
+      <View style={styles.flatInfoText}>
+        <Text style={styles.infoText}>Informações da consulta</Text>
+      </View>
+      <View style={styles.infoConsultaDados}>
+        <View style={styles.dadoInfo}>
+          <Text>Data: {Intl.DateTimeFormat('pt-BR').format(new Date(item.dataConsulta))}</Text>
+        </View>
+        <View style={styles.dadoInfo}>
+          <Text>Hora: {item.horaConsulta}</Text>
+        </View>
+        <View 
+          style={item.situacao === 'Realizada' ? styles.situacaoRealizada : 
+          item.situacao === 'Agendada' ? styles.situacaoAgendada : styles.situacaoCancelada
+          }
+        >
+          <Text style={{textTransform: 'capitalize'}}>Situação: {item.situacao}</Text>
+        </View>
+      </View>
+    </View>
+
+    {
+      this.state.permissao === '3' ?
+      <View style={styles.medico}>
+        <View style={styles.flatInfoText}>
+          <Text style={styles.infoText}>Médico</Text>
+        </View>
+        <View style={styles.dadosMedico}>
+          <View style={styles.dadoInfo}>
+            <Text style={styles.nomeMedico}>{item.nomeMedico}</Text>
+          </View>
+          <View style={styles.dadoInfo}>
+            <Text>Especialidade: {item.especialidade}</Text>
+          </View>
+        </View>
+      </View> :
+
+      this.state.permissao === '2' &&
+      <View style={styles.medico}>
+        <View style={styles.flatInfoText}>
+          <Text style={styles.infoText}>Paciente</Text>
+        </View>
+        <View style={styles.dadosMedico}>
+          <View style={styles.dadoInfo}>
+            <Text style={styles.nomeMedico}>{item.nomePaciente}</Text>
+          </View>
+          <View style={styles.dadoInfo}>
+            <Text>Data de Nascimento: {Intl.DateTimeFormat('pt-BR').format(new Date(item.dataNascimento))}</Text>
+          </View>
+        </View>
+      </View>
+    }
       <View style={styles.descricao}>
         <View style={styles.flatInfoText}>
           <Text style={styles.infoText}>Descrição</Text>
@@ -130,11 +225,12 @@ export default class Consultas extends Component {
         </View>
       </View>
 
-    </View>
+  </View>
   )
 }
 
 const styles = StyleSheet.create({
+
   main: {
     flex: 1,
     backgroundColor: '#F1F1F1',
@@ -289,7 +385,6 @@ const styles = StyleSheet.create({
     padding: 5,
     paddingLeft: 20,
     paddingRight: 20,
-  }
-
+  },
 
 });

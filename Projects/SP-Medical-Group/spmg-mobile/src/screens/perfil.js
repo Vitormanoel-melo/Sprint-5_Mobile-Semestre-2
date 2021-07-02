@@ -1,21 +1,140 @@
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, {Component} from 'react';
+import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import jwtDecode from 'jwt-decode';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Perfil</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+export default class Perfil extends Component {
+  constructor(props){
+    super(props)
+
+    this.state = {
+      permissao : '',
+      email : '',
+      nome : ''
+    }
+  }
+
+  buscarDadosStorage = async () => {
+   try {
+    const token = await AsyncStorage.getItem('userToken-acess_spmg_')
+
+    this.setState({permissao : jwtDecode(token).role, email : jwtDecode(token).email, nome : jwtDecode(token).nomePaciente, })
+   } catch (error) {
+     
+   }
+  }
+
+  componentDidMount(){
+    this.buscarDadosStorage()
+  }
+
+  realizaLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userToken-acess_spmg_')
+      this.props.navigation.navigate('Login')
+
+    } catch (error) {
+      
+    }
+  }
+
+  render(){
+    return (
+      <View style={styles.main}>
+        <View style={styles.mainPerfil}>
+          <View style={styles.mainPerfilContainer}>
+            <View style={styles.mainCirclePerfil}>
+              <Image 
+                source={this.state.permissao === '1' ? require('../../assets/img/crowns.png') : this.state.permissao === '2' ? require('../../assets/img/doctor.png') : this.state.permissao === '3' && require('../../assets/img/patient.png')}
+                style={styles.mainImgPerfil}
+              />
+            </View>
+            <Text style={{color: '#645E5E'}}>Você está logado como {this.state.permissao === '1' ? 'Administrador'.toUpperCase() : this.state.permissao === '2' ? 'Médico'.toUpperCase() : this.state.permissao === '3' && 'Paciente'.toUpperCase()}</Text>
+          </View>
+          <View style={styles.mainPerfilDados}>
+            <Text style={styles.mainPerfilDadosText}>{this.state.permissao === '1' ? 'Admin' : this.state.nome}</Text>
+            <Text style={styles.mainPerfilDadosText}>{this.state.email}</Text>
+          </View>
+        </View>        
+  
+        <View style={styles.mainPerfilSair}>
+          <TouchableOpacity onPress={this.realizaLogout} style={styles.mainBtnSair} >
+            <Text style={styles.mainBtnSairText}>Sair</Text>
+          </TouchableOpacity>
+        </View>
+  
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
-  container: {
+  main: {
     flex: 1,
-    backgroundColor: '#ccc',
+    backgroundColor: '#F3F3F3',
+    // alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+
+  mainPerfil: {
+    height: 250,
+    // backgroundColor: 'red',
+    justifyContent:   'space-between'
+  },
+
+  mainPerfilContainer: {
+    height: '55%',
+    // backgroundColor: 'yellow',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // marginBottom: 25
+  },
+
+  mainPerfilDados: {
+    alignItems: 'center',
+    marginBottom: 15
+  },
+  
+  mainPerfilDadosText: {
+    marginTop: 8,
+    color: '#645E5E'
+  },
+
+  mainCirclePerfil: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#CCC',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: '100%',
+    backgroundColor: '#CCC'
   },
+
+  mainImgPerfil: {
+    width: 70,
+    height: 70,
+  },
+
+  mainPerfilSair: {
+    alignItems: 'center',
+    marginTop: 150
+  },
+
+  mainBtnSair: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 150,
+    height: 50,
+    borderTopColor: '#CCC',
+    borderTopWidth: 1
+  },
+
+  mainBtnSairText: {
+    color: '#8DBBE0',
+    fontWeight: 600,
+    fontSize: 16
+    // textTransform: 'uppercase'
+  }
+
 });
