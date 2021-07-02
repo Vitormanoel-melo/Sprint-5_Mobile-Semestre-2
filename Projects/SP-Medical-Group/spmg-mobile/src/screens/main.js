@@ -21,8 +21,6 @@ export default class Main extends Component{
                         backgroundColor: '#FFF',
                     },
                     indicatorStyle: {
-                        // height: '100%',
-                        // backgroundColor: '#7DA4D0',
                     }
                 }}
                 screenOptions={ ({route}) => ({

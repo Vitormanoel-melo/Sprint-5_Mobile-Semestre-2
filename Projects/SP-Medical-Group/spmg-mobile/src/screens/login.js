@@ -16,29 +16,38 @@ export default class Login extends Component {
       }
   }
 
+  // Função que realiza login
   realizarLogin = async () => {
     try {
+      // deixa o state isLoading como true
       this.setState({ isLoading : true })
 
+      // faz a requisição passando o email e senha
       const resposta = await api.post('/login',{
         email: this.state.email,
         senha: this.state.senha
       })
 
+      // Se o status da resposta for 200 - OK
       if(resposta.status === 200){
+        // armazena o token com a chave e o valor
         await AsyncStorage.setItem('userToken-acess_spmg_', resposta.data.token)
-
+        // deixa o isLoading false
         this.setState({ isLoading : false })
 
+        // manda o usuário para a tela principal
         this.props.navigation.navigate('Main')
+        // chama a função limparCampos
         this.limparCampos()
       }
 
     } catch (error) {
+      // caso dê algum erro, define uma mensagem para o state mensagemErro e coloca o isLoading como false
       this.setState({ mensagemErro : 'E-mail ou senha inválidos! Tente novamente!', isLoading : false })
     }
   }
 
+  // Função que limpa os campos de email, senha e mensagemErro
   limparCampos = () => {
     this.setState({ email: '', senha: '', mensagemErro: '' })
   }
@@ -64,6 +73,7 @@ export default class Login extends Component {
                 placeholder='E-mail'
                 placeholderTextColor='#828282'
                 keyboardType='email-address'
+                autoCapitalize='none'
                 onChangeText={email => this.setState({ email })}
             />
 
